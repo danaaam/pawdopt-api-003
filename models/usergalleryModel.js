@@ -8,6 +8,7 @@ const GalleryUserSchema = new mongoose.Schema({
   breed: String,
   gender: String,
   age: Number,
+  caption: String,
   species: String,
   others: String,
   medhistory: [String],
