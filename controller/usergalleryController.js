@@ -280,19 +280,15 @@ const declineRequest = async (req, res) => {
 
 const getAdoptionRequestById = async (req, res) => {
     try {
-        // Assuming req.user contains the decoded JWT payload with user information
         const userId = req.user._id; // Access the user ID from the decoded JWT payload
 
         if (!userId) {
             return res.status(404).json({ message: 'user_id not found' });
         }
-        console.log('userId:', userId);
 
-        // Assuming AdoptionModel is properly imported and represents your Mongoose model
-        const requests = await AdoptionModel.find({ 'adoptionRequests.user_id': userId }).populate('adoptionRequests');
+        // Find adoption requests associated with the user ID
+        const requests = await AdoptionModel.find({ user_id: userId }).populate('adoptionRequests');
 
-        console.log('requests:', requests);
-        
         if (!requests || requests.length === 0) {
             return res.status(404).json({ message: 'No adoption requests found for this user' });
         }
