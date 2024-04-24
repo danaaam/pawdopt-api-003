@@ -16,6 +16,7 @@ const GalleryUserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
+  user_email: String,
   approved: {
     type: Boolean,
     default: false 

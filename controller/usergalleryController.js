@@ -56,6 +56,8 @@ const userHandleupload = async (req, res) => {
             pet_status
         });
 
+        console.log(newItem)
+
         // Save the new UserGallery document to MongoDB
         await newItem.save();
         
@@ -140,14 +142,14 @@ const usergetGallery = async (req, res) => {
 
 const adoptRequest = async (req, res) => {
     try {
-        const { user_id, email: user_email } = req.user;
-        const { imageUrl, adoptionRequests, contactinfo, name, address, email, status } = req.body;
+        const { user_id, email } = req.user;
+        const { imageUrl, adoptionRequests, contactInfo, name, address, status } = req.body;
 
         // Ensure adoptionRequests is an array
         const adoptionRequestIds = Array.isArray(adoptionRequests) ? adoptionRequests : [adoptionRequests];
 
         // Create adoption data record
-        const adoptionData = await AdoptionModel.create({ adoptionRequests: adoptionRequestIds, user_id, name, contactinfo, address, email, status });
+        const adoptionData = await AdoptionModel.create({ adoptionRequests: adoptionRequestIds, user_id, name, contactInfo, address, email, status });
 
         // Update pet_status for each adoption request
         const updatePromises = adoptionRequestIds.map(async (adoptionRequestId) => {
@@ -163,7 +165,7 @@ const adoptRequest = async (req, res) => {
             message: 'Adoption request submitted successfully',
             imageUrls: Array.isArray(imageUrl) ? imageUrl : [imageUrl], // Ensure imageUrls is an array
             user_id,
-            user_email,
+            email,
             adoptionData
         };
 
@@ -206,7 +208,6 @@ const cancelAdoptRequest = async (req, res) => {
     }
 };
 
-
 const getadoptRequests = async (req, res) => {
     try {
         const petStatus = await AdoptionModel.find().populate('adoptionRequests')
@@ -241,17 +242,27 @@ const approveRequest = async (req, res) => {
 
 const declineRequest = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { adoptionRequestId } = req.params;
         const { adminMessage } = req.body;
+        console.log(adoptionRequestId);
 
-        if (!id) {
+        if (!adoptionRequestId) {
             return res.status(400).json({ error: 'Missing adoption request ID' });
         }
 
-        const updatedRequest = await AdoptionModel.findByIdAndUpdate(id, { status: 'rejected', adminMessage }, { new: true });
+        // Update adoption request status and admin message
+        const updatedRequest = await AdoptionModel.findByIdAndUpdate(adoptionRequestId, { status: 'rejected', adminMessage }, { new: true });
 
         if (!updatedRequest) {
             return res.status(404).json({ error: 'Adoption request not found' });
+        }
+
+        // Update associated UserGallery records to set pet_status back to "for adoption"
+        const adoptionRequestsIds = updatedRequest.adoptionRequests; // Assuming adoptionRequests is an array of UserGallery IDs
+        if (adoptionRequestsIds && adoptionRequestsIds.length > 0) {
+            await Promise.all(adoptionRequestsIds.map(async (adoptionRequestId) => {
+                await UserGalleryModel.findByIdAndUpdate(adoptionRequestId, { pet_status: 'for adoption' });
+            }));
         }
 
         res.status(200).json({ message: 'Adoption request declined successfully' });
@@ -263,14 +274,31 @@ const declineRequest = async (req, res) => {
 
 const getAdoptionRequestById = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const requests = await AdoptionModel.find({ user_id: userId });
+        // Assuming req.user contains the decoded JWT payload with user information
+        const userId = req.user._id; // Access the user ID from the decoded JWT payload
+
+        if (!userId) {
+            return res.status(404).json({ message: 'user_id not found' });
+        }
+        console.log('userId:', userId);
+
+        // Assuming AdoptionModel is properly imported and represents your Mongoose model
+        const requests = await AdoptionModel.find({ 'adoptionRequests.user_id': userId }).populate('adoptionRequests');
+
+        console.log('requests:', requests);
+        
+        if (!requests || requests.length === 0) {
+            return res.status(404).json({ message: 'No adoption requests found for this user' });
+        }
+
         res.status(200).json(requests);
     } catch (error) {
         console.error('Error fetching adoption requests:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+
 
 const getPendingImagesAdoption = async (req, res) => {
     try {

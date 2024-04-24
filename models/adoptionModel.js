@@ -7,12 +7,12 @@ const AdoptionRequestSchema = new mongoose.Schema({
   },
  name: String,
  email: String,
- contactinfo: String,
+ contactInfo: String,
  address: String,
- adoptionRequests: {
+ adoptionRequests: [{
   type: mongoose.Schema.Types.ObjectId,
   ref: 'UserGallery'
-},
+}],
 status: {
   type: String,
   default: 'pending',

@@ -9,28 +9,34 @@ const createToken = (_id, email) => {
 
 //log in user
 const login = async (req, res) => {
-  const {email, password, role, lastname, firstname, contactinfo, address} = req.body;
+  const {email, password, role, lastname, firstname, contactInfo, address} = req.body;
 
   try {
-    const user = await User.login(email, password, role, firstname, lastname, address, contactinfo);
+    const user = await User.login(email, password, role, firstname, lastname, address, contactInfo);
 
-    const token = createToken(user._id);
+    const token = createToken(user._id, user.email);
   
-    res.status(200).json({email, token, role: user.role, 
-                          id: user._id, firstname: user.firstname, 
-                          lastname: user.lastname, address: user.address, 
-                          contactinfo: user.contactinfo});
+    res.status(200).json({
+      email: user.email,
+      token,
+      role: user.role,
+      id: user._id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      address: user.address,
+      contactinfo: user.contactInfo // Ensure consistent naming (contactInfo)
+    });
   } catch (error) {
     res.status(400).json({error: error.message});
   }
 }
 //register user
 const register = async (req, res) => {
-  const {firstname, lastname, email, password, address, contactinfo, role} = req.body;
+  const {firstname, lastname, email, password, address, contactInfo, role} = req.body;
   const { id } = req.params;
 
   try {
-    const user = await User.register(firstname, lastname, email, password, address, contactinfo, role);
+    const user = await User.register(firstname, lastname, email, password, address, contactInfo, role);
 
     const token = createToken(user._id);
 
