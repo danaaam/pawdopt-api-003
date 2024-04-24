@@ -2,6 +2,7 @@ const UserGallery = require('../models/usergalleryModel');
 const AdoptionModel = require('../models/adoptionModel');
 const multer = require('multer');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 
 // Set up Multer
 const storage = multer.diskStorage({
@@ -142,14 +143,19 @@ const usergetGallery = async (req, res) => {
 
 const adoptRequest = async (req, res) => {
     try {
-        const { user_id, email } = req.user;
+        const token = req.headers.authorization.split(' ')[1]; // Get the token from the Authorization header
+
+        // Decode the token to get user information
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+        const userEmail = decodedToken.email;
+
         const { imageUrl, adoptionRequests, contactInfo, name, address, status } = req.body;
 
         // Ensure adoptionRequests is an array
         const adoptionRequestIds = Array.isArray(adoptionRequests) ? adoptionRequests : [adoptionRequests];
 
         // Create adoption data record
-        const adoptionData = await AdoptionModel.create({ adoptionRequests: adoptionRequestIds, user_id, name, contactInfo, address, email, status });
+        const adoptionData = await AdoptionModel.create({ adoptionRequests: adoptionRequestIds, user_id: decodedToken._id, name, contactInfo, address, email: userEmail, status });
 
         // Update pet_status for each adoption request
         const updatePromises = adoptionRequestIds.map(async (adoptionRequestId) => {
@@ -164,17 +170,17 @@ const adoptRequest = async (req, res) => {
         const successResponse = {
             message: 'Adoption request submitted successfully',
             imageUrls: Array.isArray(imageUrl) ? imageUrl : [imageUrl], // Ensure imageUrls is an array
-            user_id,
-            email,
+            user_id: decodedToken._id,
+            email: userEmail,
             adoptionData
         };
 
-        res.status(201).json({successResponse});
+        res.status(201).json(successResponse);
     } catch (error) {
         console.error('Error submitting adoption request:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
-};
+}
 
 const cancelAdoptRequest = async (req, res) => {
     try {
