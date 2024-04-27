@@ -33,7 +33,6 @@ const userdeleteImage = async (req, res) => {
 const userHandleupload = async (req, res) => {
     try {
         const { breed, caption, gender, age, medhistory, others, species, pet_status } = req.body;
-        console.log("Caption:", caption);
         // Check if files were uploaded
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ success: false, message: 'No files uploaded' });
@@ -56,8 +55,6 @@ const userHandleupload = async (req, res) => {
             species,
             pet_status
         });
-
-        console.log(newItem)
 
         // Save the new UserGallery document to MongoDB
         await newItem.save();
