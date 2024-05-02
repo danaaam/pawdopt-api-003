@@ -77,6 +77,8 @@ app.delete('/api/user/gallery/deleteForAdoption', usergalleryController.deleteAl
 //adoption request (admin side)
 app.put('/api/adoption/request/approve/:id', usergalleryController.approveRequest);
 app.put('/api/adoption/request/decline/:id', usergalleryController.declineRequest);
+app.put('/api/adoption/request/restore/:id', usergalleryController.restoreRequest);
+
 app.get('/api/get/adoption/requests', usergalleryController.getadoptRequests);
 app.get('/api/pets/for/adoption', usergalleryController.getPendingImagesAdoption)
 //adoption request (user side)

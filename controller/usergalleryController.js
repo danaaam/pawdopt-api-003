@@ -264,11 +264,43 @@ const declineRequest = async (req, res) => {
         const adoptionRequestsIds = updatedRequest.adoptionRequests; // Assuming adoptionRequests is an array of UserGallery IDs
         if (adoptionRequestsIds && adoptionRequestsIds.length > 0) {
             await Promise.all(adoptionRequestsIds.map(async (id) => {
-                await UserGalleryModel.findByIdAndUpdate(id, { pet_status: 'for adoption' });
+                await UserGallery.findByIdAndUpdate(id, { pet_status: 'for adoption' });
             }));
         }
 
         res.status(200).json({ message: 'Adoption request declined successfully' });
+    } catch (error) {
+        console.error('Error declining adoption request:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+const restoreRequest = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        console.log(id);
+
+        if (!id) {
+            return res.status(400).json({ error: 'Missing adoption request ID' });
+        }
+
+        // Update adoption request status and admin message
+        const updatedRequest = await AdoptionModel.findByIdAndUpdate(id, { status: 'pending' }, { new: true });
+
+        if (!updatedRequest) {
+            return res.status(404).json({ error: 'Adoption request not found' });
+        }
+
+        // Update associated UserGallery records to set pet_status back to "for adoption"
+        const adoptionRequestsIds = updatedRequest.adoptionRequests; // Assuming adoptionRequests is an array of UserGallery IDs
+        if (adoptionRequestsIds && adoptionRequestsIds.length > 0) {
+            await Promise.all(adoptionRequestsIds.map(async (id) => {
+                await UserGallery.findByIdAndUpdate(id, { pet_status: 'on process' });
+            }));
+        }
+
+        res.status(200).json({ message: 'Adoption request restored successfully' });
     } catch (error) {
         console.error('Error declining adoption request:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -508,5 +540,6 @@ const getPendingImagesAdoption = async (req, res) => {
       getadoptRequests,
       cancelAdoptRequest,
       deleteAllAdoptionRequests,
-      deleteAllGallery  // Add the new controller function here
+      deleteAllGallery,
+      restoreRequest  // Add the new controller function here
   };
