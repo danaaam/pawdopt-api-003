@@ -213,7 +213,7 @@ const cancelAdoptRequest = async (req, res) => {
 
 const getadoptRequests = async (req, res) => {
     try {
-        const petStatus = await AdoptionModel.find().populate('adoptionRequests')
+        const petStatus = await AdoptionModel.find().populate('adoptionRequests').populate('adoptionRequests.user_id')
         res.status(200).json(petStatus);
     } catch (error) {
         console.error('Error fetching adoption requests:', error);
@@ -245,16 +245,16 @@ const approveRequest = async (req, res) => {
 
 const declineRequest = async (req, res) => {
     try {
-        const { adoptionRequestId } = req.params;
+        const { id } = req.params;
         const { adminMessage } = req.body;
-        console.log(adoptionRequestId);
+        console.log(id);
 
-        if (!adoptionRequestId) {
+        if (!id) {
             return res.status(400).json({ error: 'Missing adoption request ID' });
         }
 
         // Update adoption request status and admin message
-        const updatedRequest = await AdoptionModel.findByIdAndUpdate(adoptionRequestId, { status: 'rejected', adminMessage }, { new: true });
+        const updatedRequest = await AdoptionModel.findByIdAndUpdate(id, { status: 'rejected', adminMessage }, { new: true });
 
         if (!updatedRequest) {
             return res.status(404).json({ error: 'Adoption request not found' });
@@ -263,8 +263,8 @@ const declineRequest = async (req, res) => {
         // Update associated UserGallery records to set pet_status back to "for adoption"
         const adoptionRequestsIds = updatedRequest.adoptionRequests; // Assuming adoptionRequests is an array of UserGallery IDs
         if (adoptionRequestsIds && adoptionRequestsIds.length > 0) {
-            await Promise.all(adoptionRequestsIds.map(async (adoptionRequestId) => {
-                await UserGalleryModel.findByIdAndUpdate(adoptionRequestId, { pet_status: 'for adoption' });
+            await Promise.all(adoptionRequestsIds.map(async (id) => {
+                await UserGalleryModel.findByIdAndUpdate(id, { pet_status: 'for adoption' });
             }));
         }
 
