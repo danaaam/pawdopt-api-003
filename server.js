@@ -84,7 +84,7 @@ app.get('/api/pets/for/adoption', usergalleryController.getPendingImagesAdoption
 //adoption request (user side)
 app.post('/api/adoption/request',requireAuth ,usergalleryController.adoptRequest)
 app.get('/api/get/adoption/request/:userId',requireAuth , usergalleryController.getAdoptionRequestById)
-app.put('/api/cancel/adoption/request/:adoptionRequestId', requireAuth, usergalleryController.cancelAdoptRequest);
+app.delete('/api/cancel/adoption/request/:id', requireAuth, usergalleryController.cancelAdoptRequest);
 app.delete('/api/delete/all/adoption/requests', requireAuth, usergalleryController.deleteAllAdoptionRequests);
 
 mongoose.connect(process.env.MONGO_URI)

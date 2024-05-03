@@ -181,16 +181,18 @@ const adoptRequest = async (req, res) => {
 
 const cancelAdoptRequest = async (req, res) => {
     try {
-        const { adoptionRequestId } = req.params;
+        const { id } = req.params;
+
+        console.log(id)
 
         // Find the adoption request by ID and delete it
-        const adoptionRequest = await AdoptionModel.findById(adoptionRequestId);
+        const adoptionRequest = await AdoptionModel.findById(id);
         if (!adoptionRequest) {
             return res.status(404).json({ error: 'Adoption request not found' });
         }
 
         // Delete the adoption request
-        await AdoptionModel.findByIdAndDelete(adoptionRequestId);
+        await AdoptionModel.findByIdAndDelete(id);
 
         // Update associated UserGallery records based on adoptionRequests
         const adoptionRequests = adoptionRequest.adoptionRequests; // Assuming adoptionRequests contains _id values
