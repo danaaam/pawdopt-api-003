@@ -59,7 +59,7 @@ app.delete('/api/delete/user/:id', authController.deleteUserById)
 app.post('/api/upload',requireAuth , galleryController.upload.single('image'), galleryController.handleUpload);
 app.get('/api/gallery', galleryController.getGallery);
 app.put('/api/gallery/:id',requireAuth, galleryController.editImage);
-// app.delete('/api/gallery/:id',requireAuth, galleryController.deleteImage);
+app.delete('/api/gallery/:id',requireAuth, galleryController.deleteImage);
 
 
 //admin image approval to user's upload 
