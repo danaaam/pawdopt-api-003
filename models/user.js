@@ -3,18 +3,59 @@ const bcrypt = require('bcrypt')
 const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
-  firstname: { type: String, required: true },
-  lastname: { type: String, required: true },
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-  address: { type: String, required: true },
-  contactinfo: { type: String, required: true },
-  role: { type: String,
-          default: "user"},
+  firstname: { 
+    type: String, 
+    required: true 
+  }, 
+  middlename: { 
+    type: String
+  },
+  lastname: { 
+    type: String, 
+    required: true 
+  },
+  suffix: {
+    type: String,
+    enum: [
+      'Sr.','Jr.','II','III','IV'
+    ]
+  },
+  email: { 
+    type: String, 
+    required: true 
+  },
+  facebook: {
+    type: String,
+    required: true
+  },
+  password: { 
+    type: String, 
+    required: true 
+  },
+  currentAddress: { 
+    type: String, 
+    required: true 
+  },
+  permanentAddress: {
+    type: String, 
+    required: true 
+  },
+  contactinfo: { 
+    type: String, 
+    required: true 
+  },
+  role: { 
+    type: String,
+    default: "user"
+  },
   verified: {
-            type: Boolean,
-            default: false
-          },
+    type: Boolean,
+    default: false
+  },
+  validDocs: {
+    type: String,
+    required: true
+  },
   adminMessage: String,
   otp: { type: Number } 
         }, { strictPopulate: false });
@@ -46,10 +87,10 @@ userSchema.statics.submitotp = async function(password, next) {
 
 
 
-userSchema.statics.register = async function(firstname ,lastname, email, password, address, contactinfo) {
+userSchema.statics.register = async function(firstname ,lastname, middlename, suffix, validDocs, email, password, address, contactinfo, currentAddress, permanentAddress) {
 
   // validation
-  if (!firstname || !lastname || !email || !password|| !address || !contactinfo ) {
+  if (!firstname || !lastname || !email || !password|| !address || !contactinfo || !validDocs || !currentAddress || !permanentAddress) {
 
     throw Error('All fields must be filled')
   }
@@ -66,7 +107,7 @@ userSchema.statics.register = async function(firstname ,lastname, email, passwor
   const salt = await bcrypt.genSalt(10)
   const hash = await bcrypt.hash(password, salt)
 
-  const user = await this.create({ firstname, lastname, email, password: hash, address, contactinfo})
+  const user = await this.create({ firstname, middlename, suffix, validDocs, lastname, email, password: hash, address, contactinfo, currentAddress, permanentAddress})
 
   return user
 }
