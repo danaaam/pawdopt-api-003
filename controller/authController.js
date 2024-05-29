@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer')
 const bcrypt = require('bcrypt')
 const User = require('../models/user');
+const multer = require('multer');
+const path = require('path');
 
 const createToken = (_id, email) => {
   return jwt.sign({_id, email}, process.env.SECRET, { expiresIn: '3d' })
@@ -9,10 +11,10 @@ const createToken = (_id, email) => {
 
 //log in user
 const login = async (req, res) => {
-  const {email, password, role, lastname, firstname, contactInfo, address} = req.body;
+  const {email, password, role, lastname, firstname, contactinfo, address} = req.body;
 
   try {
-    const user = await User.login(email, password, role, firstname, lastname, address, contactInfo);
+    const user = await User.login(email, password, role, firstname, lastname, address, contactinfo);
 
     const token = createToken(user._id, user.email);
   
@@ -24,27 +26,48 @@ const login = async (req, res) => {
       firstname: user.firstname,
       lastname: user.lastname,
       address: user.address,
-      contactinfo: user.contactInfo // Ensure consistent naming (contactInfo)
+      contactinfo: user.contactinfo // Ensure consistent naming (contactInfo)
     });
   } catch (error) {
     res.status(400).json({error: error.message});
   }
+
 }
-//register user
+
+// Set up Multer
+const storage = multer.diskStorage({
+  destination: './uploads/',
+  filename: (req, file, cb) => {
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage }).single('validDocs');
+
 const register = async (req, res) => {
-  const {firstname, lastname, email, password, address, contactInfo} = req.body;
-  const { id } = req.params;
+  upload(req, res, async function (err) {
+    if (err) {
+      // Handle multer error
+      return res.status(500).json({ error: "An error occurred while uploading the file." });
+    }
 
-  try {
-    const user = await User.register(firstname, lastname, email, password, address, contactInfo);
+    // Extract user data and file path from request
+    const { firstname, lastname, email, password, contactinfo, currentAddress, permanentAddress, facebook, middlename = '', suffix} = req.body;
+    const { id } = req.params;
+    const filePath = req.file ? req.file.path : null;
 
-    const token = createToken(user._id);
+    try {
+      // Save user data to the database, including the file path
+      const user = await User.register(firstname, lastname, email, password, contactinfo, currentAddress, permanentAddress, facebook, middlename, suffix, filePath);
+      const token = createToken(user._id);
 
-    res.status(200).json({email, token, id});
-  } catch (error) {
-    res.status(400).json({error: error.message});
-  }
-}
+      res.status(200).json({ email, token, id });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+      console.error(error);
+    }
+  });
+};
 
 //edit user admin only
 const editUser = async (req, res) => {
