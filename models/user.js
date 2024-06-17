@@ -55,7 +55,6 @@ const userSchema = new mongoose.Schema({
   validDocs: {
     type: String
   },
-  adminMessage: String,
   otp: { type: Number } 
 }, { strictPopulate: false });
 
