@@ -526,6 +526,27 @@ const getPendingImagesAdoption = async (req, res) => {
     }
 };
 
+const editGalleryItem = async (req, res) => {
+    const { id } = req.params;
+    const { breed, caption, gender, age, medhistory, others, species, pet_status } = req.body;
+
+    try {
+        const updatedItem = await UserGallery.findByIdAndUpdate(
+            id,
+            { breed, caption, gender, age, medhistory, others, species, pet_status },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedItem) {
+            return res.status(404).json({ success: false, message: 'Gallery item not found' });
+        }
+
+        res.json({ success: true, message: 'Gallery item updated successfully', updatedItem });
+    } catch (error) {
+        console.error('Error updating gallery item:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
 
 
   
@@ -543,5 +564,6 @@ const getPendingImagesAdoption = async (req, res) => {
       cancelAdoptRequest,
       deleteAllAdoptionRequests,
       deleteAllGallery,
-      restoreRequest  // Add the new controller function here
+      restoreRequest,  // Add the new controller function here
+      editGalleryItem
   };
