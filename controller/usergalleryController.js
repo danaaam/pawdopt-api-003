@@ -318,7 +318,7 @@ const getAdoptionRequestById = async (req, res) => {
         }
 
         // Find adoption requests associated with the user ID
-        const requests = await AdoptionModel.find({ user_id: userId }).populate('adoptionRequests');
+        const requests = await AdoptionModel.find({ user_id: userId }).populate('adoptionRequests').populate('User');
 
         if (!requests || requests.length === 0) {
             return res.status(404).json({ message: 'No adoption requests found for this user' });
