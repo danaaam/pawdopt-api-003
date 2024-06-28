@@ -1,9 +1,14 @@
 const mongoose = require('mongoose');
 
+
 const GalleryUserSchema = new mongoose.Schema({
   imageUrls: {
     type: [String], // Array of image URLs
     required: true
+},
+pdfUrls: {
+  type: [String],
+  required: false
 },
   breed: String,
   gender: String,
@@ -19,7 +24,7 @@ const GalleryUserSchema = new mongoose.Schema({
   user_email: String,
   approved: {
     type: Boolean,
-    default: false 
+    default: false
   },
   pet_status: {
     type: String,
@@ -27,8 +32,11 @@ const GalleryUserSchema = new mongoose.Schema({
     enum: ['for adoption', 'on process']
     }
 }, { timestamps: true });
-  
+ 
+
 
 const UserGallery = mongoose.model('UserGallery', GalleryUserSchema);
 
+
 module.exports = UserGallery;
+

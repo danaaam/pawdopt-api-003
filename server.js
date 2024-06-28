@@ -1,18 +1,39 @@
 require('dotenv').config()
 
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const path = require("path"); 
+const path = require("path");
 const cookieParser = require("cookie-parser");
 const bodyParser = require('body-parser');
+
 
 // const userController = require('./controller/user');
 const galleryController = require('./controller/galleryController');
 const usergalleryController = require('./controller/usergalleryController');
-const requireAuth = require('./middleware/requireAuth'); 
+const requireAuth = require('./middleware/requireAuth');
 const authController = require('./controller/authController');
 const app = express();
+const multer = require('multer');
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      if (file.fieldname === 'image') {
+        cb(null, 'uploads/');
+      } else if (file.fieldname === 'pdf') {
+        cb(null, 'files/');
+      } else {
+        cb(new Error('Invalid file fieldname'));
+      }
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname); // You can modify the filename as needed
+    }
+  })
+});
+
+
 
 
 // Error handling middleware
@@ -21,28 +42,40 @@ const app = express();
 //   next()
 // })
 
+
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
+
 // Serve uploaded images from the 'uploads' directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/files", express.static(path.join(__dirname, "files")));
+
 
 //check on seclected port if the backend runs sucessfully
 app.get("/", (req, res) => {
   res.send("ako to");
-}); 
+});
+
 
 //login
-app.post('/api/register', authController.register);
-//register
 app.post('/api/login' , authController.login);
 //verification checker
 app.get('/api/check-verification/:id', authController.checkVerification);
+//register  
+app.post('/api/register', authController.register);
+//send verification code
+app.post('/api/send-verification-email', authController.requestVerificationCode);
+//gmail verify
+app.get('/api/verify-email', authController.verifyEmail);
+//email check verification
+app.get('/api/check/verification/status', authController.checkVerificationStatus);
 //reset password
 app.post('/api/sendotp', authController.sendotp);
 app.post('/api/submitotp', authController.submitotp);
+
 
 //admin get, edit, delete user admin side
 app.get('/api/getallusers', authController.getAllUsers);
@@ -55,6 +88,7 @@ app.get('/api/getuser/:id', authController.getUserById);
 app.put('/api/edit/user/:id', authController.editUserById);
 app.delete('/api/delete/user/:id', authController.deleteUserById)
 
+
 //admin upload image crud
 app.post('/api/upload',requireAuth , galleryController.upload.single('image'), galleryController.handleUpload);
 app.get('/api/gallery', galleryController.getGallery);
@@ -62,23 +96,32 @@ app.put('/api/gallery/:id',requireAuth, galleryController.editImage);
 app.delete('/api/gallery/:id',requireAuth, galleryController.deleteImage);
 
 
-//admin image approval to user's upload 
+
+
+//admin image approval to user's upload
 // app.get('/api/pending-images', usergalleryController.getPendingImages);
 // app.put('/api/approve-image/:id', usergalleryController.approveImage);
 // app.delete('/api/decline-image/:id', usergalleryController.declineImage);
 
 
 
+
+
+
 //admmin upload image
-app.post('/api/user/upload',requireAuth, usergalleryController.upload.array('images', 4), usergalleryController.userHandleupload);
+app.post('/api/user/upload',requireAuth, usergalleryController.upload.array('files'), usergalleryController.userHandleupload);
 app.get('/api/user/gallery', usergalleryController.usergetGallery);
+app.patch('/api/user/gallery/edit/:id', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'pdf', maxCount: 1 }]), usergalleryController.editGalleryItem);
 app.delete('/api/user/gallery/:id',requireAuth, usergalleryController.userdeleteImage);
-app.delete('/api/user/gallery/deleteForAdoption', usergalleryController.deleteAllGallery)
+app.delete('/api/user/gallery/deleteForAdoption', usergalleryController.deleteAllGallery);
+
+
 //adoption request (admin side)
 app.put('/api/adoption/request/approve/:id', usergalleryController.approveRequest);
 app.put('/api/adoption/request/decline/:id', usergalleryController.declineRequest);
 app.put('/api/adoption/request/restore/:id', usergalleryController.restoreRequest);
 app.put('/api/adoption/request/edit/:id', usergalleryController.restoreRequest);
+
 
 app.get('/api/get/adoption/requests', usergalleryController.getadoptRequests);
 app.get('/api/pets/for/adoption', usergalleryController.getPendingImagesAdoption)
@@ -87,6 +130,7 @@ app.post('/api/adoption/request',requireAuth ,usergalleryController.adoptRequest
 app.get('/api/get/adoption/request/:userId',requireAuth , usergalleryController.getAdoptionRequestById)
 app.delete('/api/cancel/adoption/request/:id', requireAuth, usergalleryController.cancelAdoptRequest);
 app.delete('/api/delete/all/adoption/requests', requireAuth, usergalleryController.deleteAllAdoptionRequests);
+
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
@@ -98,3 +142,5 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((error) => {
     console.log(error)
   })
+ 
+
